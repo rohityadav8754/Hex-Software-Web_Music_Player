@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .music-player {
+            background-color: #181818;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .song-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .song-info h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #fff;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .song-info p {
+            font-size: 16px;
+            color: #b3b3b3;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .progress-container {
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            background-color: #535353;
+            height: 4px;
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress {
+            background-color: #1DB954;
+            height: 100%;
+            width: 0;
+            border-radius: 2px;
+            transition: width 0.1s linear;
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #b3b3b3;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #fff;
+            font-size: 16px;
+            margin: 0 8px;
+            padding: 8px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #282828;
+        }
+
+        .btn.play-pause {
+            background-color: #1DB954;
+            color: #000;
+            width: 48px;
+            height: 48px;
+        }
+
+        .btn.play-pause:hover {
+            transform: scale(1.08);
+            background-color: #1ed760;
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .volume-icon {
+            margin-right: 8px;
+            color: #b3b3b3;
+            width: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .volume-slider {
+            flex-grow: 1;
+            height: 4px;
+            appearance: none;
+            background-color: #535353;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #fff;
+            cursor: pointer;
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #fff;
+            cursor: pointer;
+            border: none;
+        }
+
+        .playlist-container {
+            background-color: #212121;
+            border-radius: 8px;
+            overflow: hidden;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .playlist-title {
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-bottom: 1px solid #333;
+        }
+
+        .playlist {
+            list-style: none;
+        }
+
+        .playlist-item {
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .playlist-item:hover {
+            background-color: #2a2a2a;
+        }
+
+        .playlist-item.active {
+            background-color: #333;
+            color: #1DB954;
+        }
+
+        .song-details {
+            display: flex;
+            flex-direction: column;
+            max-width: 75%;
+        }
+
+        .song-title {
+            font-size: 14px;
+            margin-bottom: 4px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .song-artist {
+            font-size: 12px;
+            color: #b3b3b3;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .song-duration {
+            font-size: 12px;
+            color: #b3b3b3;
+        }
+
+        /* Scrollbar styling */
+        .playlist-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .playlist-container::-webkit-scrollbar-track {
+            background: #212121;
+        }
+
+        .playlist-container::-webkit-scrollbar-thumb {
+            background-color: #535353;
+            border-radius: 3px;
+        }
+
+        .playlist-container::-webkit-scrollbar-thumb:hover {
+            background-color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="music-player">
+        <div class="song-info">
+            <h2 id="current-song-title">Select a song</h2>
+            <p id="current-song-artist">Artist</p>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <div class="time-display">
+                <span id="current-time">0:00</span>
+                <span id="duration">0:00</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="prev-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="19 20 9 12 19 4 19 20"></polygon>
+                    <line x1="5" y1="19" x2="5" y2="5"></line>
+                </svg>
+            </button>
+            
+            <button class="btn play-pause" id="play-pause-btn">
+                <svg id="play-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <svg id="pause-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+            </button>
+            
+            <button class="btn" id="next-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                    <line x1="19" y1="5" x2="19" y2="19"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="volume-container">
+            <div class="volume-icon" id="volume-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+            </div>
+            <input type="range" min="0" max="1" step="0.01" value="0.7" class="volume-slider" id="volume-slider">
+        </div>
+
+        <div class="playlist-container">
+            <div class="playlist-title">Playlist</div>
+            <ul class="playlist" id="playlist">
+                <!-- Playlist items will be added here by JavaScript -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Playlist data
+            const playlist = [
+                {
+                    id: 1,
+                    title: "Autumn Leaves",
+                    artist: "Jazz Quartet",
+                    duration: 185,
+                    url: "#"
+                },
+                {
+                    id: 2,
+                    title: "Ocean Waves",
+                    artist: "Ambient Sounds",
+                    duration: 240,
+                    url: "#"
+                },
+                {
+                    id: 3,
+                    title: "Electric Dreams",
+                    artist: "Synth Pop",
+                    duration: 210,
+                    url: "#"
+                },
+                {
+                    id: 4,
+                    title: "Mountain Echo",
+                    artist: "Folk Ensemble",
+                    duration: 195,
+                    url: "#"
+                },
+                {
+                    id: 5,
+                    title: "Urban Rhythm",
+                    artist: "City Beats",
+                    duration: 225,
+                    url: "#"
+                }
+            ];
+
+            // Cached DOM Elements
+            const currentSongTitle = document.getElementById('current-song-title');
+            const currentSongArtist = document.getElementById('current-song-artist');
+            const progressBar = document.getElementById('progress-bar');
+            const progress = document.getElementById('progress');
+            const currentTimeDisplay = document.getElementById('current-time');
+            const durationDisplay = document.getElementById('duration');
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const volumeSlider = document.getElementById('volume-slider');
+            const volumeIcon = document.getElementById('volume-icon');
+            const playlistElement = document.getElementById('playlist');
+
+            // Player state
+            let currentSongIndex = 0;
+            let isPlaying = false;
+            let audioElement = new Audio();
+            let updateTimer;
+
+            // Format time (seconds to MM:SS)
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins}:${secs < 10 ? '0' + secs : secs}`;
+            }
+
+            // Update the volume icon based on current volume
+            function updateVolumeIcon(volume) {
+                let html;
+                if (volume === 0) {
+                    html = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <line x1="23" y1="9" x2="17" y2="15"></line>
+                        <line x1="17" y1="9" x2="23" y2="15"></line>
+                    </svg>`;
+                } else if (volume < 0.5) {
+                    html = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>`;
+                } else {
+                    html = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                    </svg>`;
+                }
+                volumeIcon.innerHTML = html;
+            }
+
+            // Load a song
+            function loadSong(index) {
+                const song = playlist[index];
+                currentSongTitle.textContent = song.title;
+                currentSongArtist.textContent = song.artist;
+                durationDisplay.textContent = formatTime(song.duration);
+                
+                // Update active song in playlist
+                const playlistItems = document.querySelectorAll('.playlist-item');
+                playlistItems.forEach(item => item.classList.remove('active'));
+                playlistItems[index].classList.add('active');
+                
+                // Simulate loading a real audio file
+                audioElement.src = song.url;
+                audioElement.load();
+                
+                // Reset progress
+                progress.style.width = '0%';
+                currentTimeDisplay.textContent = '0:00';
+            }
+
+            // Play/Pause toggle
+            function togglePlay() {
+                if (isPlaying) {
+                    pauseSong();
+                } else {
+                    playSong();
+                }
+            }
+
+            // Play song
+            function playSong() {
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'block';
+                isPlaying = true;
+                
+                // In a real player, we would call audioElement.play()
+                // For this demo, we'll simulate playback with setInterval
+                clearInterval(updateTimer);
+                let currentTime = 0;
+                const songDuration = playlist[currentSongIndex].duration;
+                
+                updateTimer = setInterval(() => {
+                    currentTime += 0.1;
+                    const progressPercent = (currentTime / songDuration) * 100;
+                    progress.style.width = `${progressPercent}%`;
+                    currentTimeDisplay.textContent = formatTime(currentTime);
+                    
+                    if (currentTime >= songDuration) {
+                        clearInterval(updateTimer);
+                        nextSong();
+                    }
+                }, 100);
+            }
+
+            // Pause song
+            function pauseSong() {
+                playIcon.style.display = 'block';
+                pauseIcon.style.display = 'none';
+                isPlaying = false;
+                
+                // In a real player, we would call audioElement.pause()
+                clearInterval(updateTimer);
+            }
+
+            // Previous song
+            function prevSong() {
+                currentSongIndex--;
+                if (currentSongIndex < 0) {
+                    currentSongIndex = playlist.length - 1;
+                }
+                loadSong(currentSongIndex);
+                if (isPlaying) {
+                    pauseSong();
+                    playSong();
+                }
+            }
+
+            // Next song
+            function nextSong() {
+                currentSongIndex++;
+                if (currentSongIndex > playlist.length - 1) {
+                    currentSongIndex = 0;
+                }
+                loadSong(currentSongIndex);
+                if (isPlaying) {
+                    pauseSong();
+                    playSong();
+                }
+            }
+
+            // Update progress based on click position
+            function setProgress(e) {
+                const width = progressBar.clientWidth;
+                const clickX = e.offsetX;
+                const songDuration = playlist[currentSongIndex].duration;
+                const seekTime = (clickX / width) * songDuration;
+                
+                // In a real player, we would call audioElement.currentTime = seekTime
+                // For this demo, we'll update the progress bar
+                const progressPercent = (seekTime / songDuration) * 100;
+                progress.style.width = `${progressPercent}%`;
+                currentTimeDisplay.textContent = formatTime(seekTime);
+                
+                // Restart the timer from the new position
+                if (isPlaying) {
+                    pauseSong();
+                    
+                    let currentTime = seekTime;
+                    updateTimer = setInterval(() => {
+                        currentTime += 0.1;
+                        const newProgressPercent = (currentTime / songDuration) * 100;
+                        progress.style.width = `${newProgressPercent}%`;
+                        currentTimeDisplay.textContent = formatTime(currentTime);
+                        
+                        if (currentTime >= songDuration) {
+                            clearInterval(updateTimer);
+                            nextSong();
+                        }
+                    }, 100);
+                    
+                    isPlaying = true;
+                    playIcon.style.display = 'none';
+                    pauseIcon.style.display = 'block';
+                }
+            }
+
+            // Set up volume
+            function setVolume() {
+                const volume = volumeSlider.value;
+                audioElement.volume = volume;
+                updateVolumeIcon(volume);
+            }
+
+            // Create the playlist UI
+            function createPlaylist() {
+                playlistElement.innerHTML = '';
+                playlist.forEach((song, index) => {
+                    const li = document.createElement('li');
+                    li.className = `playlist-item ${index === currentSongIndex ? 'active' : ''}`;
+                    li.innerHTML = `
+                        <div class="song-details">
+                            <div class="song-title">${song.title}</div>
+                            <div class="song-artist">${song.artist}</div>
+                        </div>
+                        <div class="song-duration">${formatTime(song.duration)}</div>
+                    `;
+                    li.addEventListener('click', () => {
+                        currentSongIndex = index;
+                        loadSong(currentSongIndex);
+                        if (isPlaying) {
+                            pauseSong();
+                        }
+                        playSong();
+                    });
+                    playlistElement.appendChild(li);
+                });
+            }
+
+            // Event listeners
+            playPauseBtn.addEventListener('click', togglePlay);
+            prevBtn.addEventListener('click', prevSong);
+            nextBtn.addEventListener('click', nextSong);
+            progressBar.addEventListener('click', setProgress);
+            volumeSlider.addEventListener('input', setVolume);
+
+            // Initialize player
+            createPlaylist();
+            loadSong(currentSongIndex);
+            setVolume();
+        });
+    </script>
+</body>
+</html>
